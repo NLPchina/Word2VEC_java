@@ -41,14 +41,19 @@ public class Learn {
 
     public int EXP_TABLE_SIZE = 1000;
 
+    private Boolean isCbow = false;
+
     private double[] expTable = new double[EXP_TABLE_SIZE];
 
     private int trainWordsCount = 0;
 
     private int MAX_EXP = 6;
 
-    public Learn(Integer layerSize, Integer window, Double alpha, Double sample) {
+    public Learn(Boolean isCbow, Integer layerSize, Integer window, Double alpha, Double sample) {
         createExpTable();
+        if (isCbow != null) {
+            this.isCbow = isCbow;
+        }
         if (layerSize != null)
             this.layerSize = layerSize;
         if (window != null)
@@ -61,7 +66,6 @@ public class Learn {
 
     public Learn() {
         createExpTable();
-
     }
 
     /**
@@ -78,7 +82,10 @@ public class Learn {
             int wordCountActual = 0;
             while ((temp = br.readLine()) != null) {
                 if (wordCount - lastWordCount > 10000) {
-                    System.out.println("alpha:"+alpha+"\tProgress: "+(int)(wordCountActual / (double)(trainWordsCount + 1) * 100)+"%");
+                    System.out
+                        .println("alpha:" + alpha + "\tProgress: "
+                                 + (int) (wordCountActual / (double) (trainWordsCount + 1) * 100)
+                                 + "%");
                     wordCountActual += wordCount - lastWordCount;
                     lastWordCount = wordCount;
                     alpha = startingAlpha * (1 - wordCountActual / (double) (trainWordsCount + 1));
@@ -108,7 +115,11 @@ public class Learn {
 
                 for (int index = 0; index < sentence.size(); index++) {
                     nextRandom = nextRandom * 25214903917L + 11;
-                    skipGram(index, sentence, (int) nextRandom % window);
+                    if (isCbow) {
+                        cbowGram(index, sentence, (int) nextRandom % window);
+                    } else {
+                        skipGram(index, sentence, (int) nextRandom % window);
+                    }
                 }
 
             }
@@ -169,13 +180,17 @@ public class Learn {
         }
 
     }
-    
-    
-    
+
+    /**
+     * 词袋模型
+     * @param index
+     * @param sentence
+     * @param b
+     */
     private void cbowGram(int index, List<WordNeuron> sentence, int b) {
         WordNeuron word = sentence.get(index);
         int a, c = 0;
-       
+
         List<Neuron> neurons = word.getNeurons();
         double[] neu1e = new double[layerSize];//误差项
         double[] neu1 = new double[layerSize];//误差项
@@ -195,8 +210,8 @@ public class Learn {
                     neu1[c] += last_word.syn0[c];
             }
 
-//        //HIERARCHICAL SOFTMAX
-//        WordNeuron we = sentence.get(c);
+        //        //HIERARCHICAL SOFTMAX
+        //        WordNeuron we = sentence.get(c);
 
         for (int d = 0; d < neurons.size(); d++) {
             HiddenNeuron out = (HiddenNeuron) neurons.get(d);
@@ -212,9 +227,9 @@ public class Learn {
             else
                 f = expTable[(int) ((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
             // 'g' is the gradient multiplied by the learning rate
-//            double g = (1 - word.codeArr[d] - f) * alpha;
+            //            double g = (1 - word.codeArr[d] - f) * alpha;
             //              double g = f*(1-f)*( word.codeArr[i] - f) * alpha;
-            double g = f*(1-f)*( word.codeArr[d] - f) * alpha;
+            double g = f * (1 - f) * (word.codeArr[d] - f) * alpha;
             //
             for (c = 0; c < layerSize; c++) {
                 neu1e[c] += g * out.syn1[c];
@@ -238,7 +253,6 @@ public class Learn {
                     last_word.syn0[c] += neu1e[c];
             }
 
-           
         }
     }
 
