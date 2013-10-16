@@ -78,15 +78,16 @@ public class Learn {
             int wordCountActual = 0;
             while ((temp = br.readLine()) != null) {
                 if (wordCount - lastWordCount > 10000) {
+                    System.out.println("alpha:"+alpha+"\tProgress: "+(int)(wordCountActual / (double)(trainWordsCount + 1) * 100)+"%");
                     wordCountActual += wordCount - lastWordCount;
                     lastWordCount = wordCount;
-                    alpha = startingAlpha * (1 - wordCountActual /(double) (trainWordsCount + 1));
+                    alpha = startingAlpha * (1 - wordCountActual / (double) (trainWordsCount + 1));
                     if (alpha < startingAlpha * 0.0001) {
                         alpha = startingAlpha * 0.0001;
                     }
                 }
                 String[] strs = temp.split(" ");
-                wordCount += strs.length ;
+                wordCount += strs.length;
                 List<WordNeuron> sentence = new ArrayList<WordNeuron>();
                 for (int i = 0; i < strs.length; i++) {
                     Neuron entry = wordMap.get(strs[i]);
@@ -104,11 +105,10 @@ public class Learn {
                         sentence.add((WordNeuron) entry);
                     }
                 }
-                
-                
+
                 for (int index = 0; index < sentence.size(); index++) {
                     nextRandom = nextRandom * 25214903917L + 11;
-                    skipGram(index, sentence, new Random().nextInt(window));
+                    skipGram(index, sentence, (int) nextRandom % window);
                 }
 
             }
