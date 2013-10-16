@@ -37,7 +37,7 @@ public class Learn {
 
     private double sample = 1e-3;
     private double alpha = 0.025;
-    private double startingAlpha ;
+    private double startingAlpha = alpha ;
 
     public int EXP_TABLE_SIZE = 1000;
 
