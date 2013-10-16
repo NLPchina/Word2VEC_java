@@ -25,7 +25,7 @@ public class Word2VEC {
         vec2.loadGoogleModel("library/vectors.bin") ;
         
         
-        String str = "好" ;
+        String str = "毛泽东" ;
         System.out.println(vec.distance(str));
         System.out.println(vec2.distance(str));
         
