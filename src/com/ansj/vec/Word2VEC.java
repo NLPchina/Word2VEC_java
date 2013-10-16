@@ -2,6 +2,7 @@ package com.ansj.vec;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,15 +18,21 @@ import com.ansj.vec.domain.WordEntry;
 public class Word2VEC {
 
     public static void main(String[] args) throws IOException {
+        
+        
+        Learn learn = new Learn();
+        learn.learnFile(new File("library/xh.txt"));
+        learn.saveModel(new File("library/javaSkip1"));
+        
         Word2VEC vec = new Word2VEC();
-        vec.loadJavaModel("library/javaVector");
+        vec.loadJavaModel("library/javaSkip1");
         
 
         Word2VEC vec2 = new Word2VEC();
         vec2.loadGoogleModel("library/vectors.bin") ;
         
         
-        String str = "好" ;
+        String str = "毛泽东" ;
         System.out.println(vec.distance(str));
         System.out.println(vec2.distance(str));
         

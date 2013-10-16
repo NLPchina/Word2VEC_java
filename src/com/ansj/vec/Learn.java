@@ -169,6 +169,78 @@ public class Learn {
         }
 
     }
+    
+    
+    
+    private void cbowGram(int index, List<WordNeuron> sentence, int b) {
+        WordNeuron word = sentence.get(index);
+        int a, c = 0;
+       
+        List<Neuron> neurons = word.getNeurons();
+        double[] neu1e = new double[layerSize];//误差项
+        double[] neu1 = new double[layerSize];//误差项
+        WordNeuron last_word;
+
+        for (a = b; a < window * 2 + 1 - b; a++)
+            if (a != window) {
+                c = index - window + a;
+                if (c < 0)
+                    continue;
+                if (c >= sentence.size())
+                    continue;
+                last_word = sentence.get(c);
+                if (last_word == null)
+                    continue;
+                for (c = 0; c < layerSize; c++)
+                    neu1[c] += last_word.syn0[c];
+            }
+
+//        //HIERARCHICAL SOFTMAX
+//        WordNeuron we = sentence.get(c);
+
+        for (int d = 0; d < neurons.size(); d++) {
+            HiddenNeuron out = (HiddenNeuron) neurons.get(d);
+
+            double f = 0;
+            // Propagate hidden -> output
+            for (c = 0; c < layerSize; c++)
+                f += neu1[c] * out.syn1[c];
+            if (f <= -MAX_EXP)
+                continue;
+            else if (f >= MAX_EXP)
+                continue;
+            else
+                f = expTable[(int) ((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
+            // 'g' is the gradient multiplied by the learning rate
+//            double g = (1 - word.codeArr[d] - f) * alpha;
+            //              double g = f*(1-f)*( word.codeArr[i] - f) * alpha;
+            double g = f*(1-f)*( word.codeArr[d] - f) * alpha;
+            //
+            for (c = 0; c < layerSize; c++) {
+                neu1e[c] += g * out.syn1[c];
+            }
+            // Learn weights hidden -> output
+            for (c = 0; c < layerSize; c++) {
+                out.syn1[c] += g * neu1[c];
+            }
+        }
+        for (a = b; a < window * 2 + 1 - b; a++) {
+            if (a != window) {
+                c = index - window + a;
+                if (c < 0)
+                    continue;
+                if (c >= sentence.size())
+                    continue;
+                last_word = sentence.get(c);
+                if (last_word == null)
+                    continue;
+                for (c = 0; c < layerSize; c++)
+                    last_word.syn0[c] += neu1e[c];
+            }
+
+           
+        }
+    }
 
     /**
      * 统计词频
