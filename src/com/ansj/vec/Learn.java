@@ -37,7 +37,7 @@ public class Learn {
 
     private double sample = 1e-3;
     private double alpha = 0.025;
-    private double startingAlpha = alpha;
+    private double startingAlpha ;
 
     public int EXP_TABLE_SIZE = 1000;
 
@@ -324,6 +324,48 @@ public class Learn {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+    
+    
+    public int getLayerSize() {
+        return layerSize;
+    }
+
+    public void setLayerSize(int layerSize) {
+        this.layerSize = layerSize;
+    }
+
+    public int getWindow() {
+        return window;
+    }
+
+    public void setWindow(int window) {
+        this.window = window;
+    }
+
+    public double getSample() {
+        return sample;
+    }
+
+    public void setSample(double sample) {
+        this.sample = sample;
+    }
+
+    public double getAlpha() {
+        return alpha;
+    }
+
+    public void setAlpha(double alpha) {
+        this.alpha = alpha;
+        this.startingAlpha = alpha ;
+    }
+
+    public Boolean getIsCbow() {
+        return isCbow;
+    }
+
+    public void setIsCbow(Boolean isCbow) {
+        this.isCbow = isCbow;
     }
 
     public static void main(String[] args) throws IOException {
