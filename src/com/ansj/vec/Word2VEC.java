@@ -1,14 +1,11 @@
 package com.ansj.vec;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -21,19 +18,21 @@ public class Word2VEC {
 
     public static void main(String[] args) throws IOException {
         Word2VEC vec = new Word2VEC();
-        vec.loadJavaModel("javaVector");
+        vec.loadJavaModel("library/javaVector");
         
 
         Word2VEC vec2 = new Word2VEC();
-        vec2.loadGoogleModel("vectors.bin") ;
+        vec2.loadGoogleModel("library/vectors.bin") ;
         
         
-        String str = "毛泽东" ;
+        String str = "好" ;
         System.out.println(vec.distance(str));
         System.out.println(vec2.distance(str));
         
 
         //男人 国王 女人 
+        System.out.println(vec.analogy("邓小平", "毛泽东思想", "毛泽东"));
+        System.out.println(vec2.analogy("毛泽东", "毛泽东思想", "邓小平"));
     }
 
     private HashMap<String, float[]> wordMap = new HashMap<String, float[]>();

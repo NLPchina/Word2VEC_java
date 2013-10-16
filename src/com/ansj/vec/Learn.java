@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 
 import love.cq.util.MapCount;
 
@@ -36,6 +37,7 @@ public class Learn {
 
     private double sample = 1e-3;
     private double alpha = 0.025;
+    private double startingAlpha = alpha;
 
     public int EXP_TABLE_SIZE = 1000;
 
@@ -71,8 +73,20 @@ public class Learn {
             new InputStreamReader(new FileInputStream(file)))) {
             String temp = null;
             long nextRandom = 5;
+            int wordCount = 0;
+            int lastWordCount = 0;
+            int wordCountActual = 0;
             while ((temp = br.readLine()) != null) {
+                if (wordCount - lastWordCount > 10000) {
+                    wordCountActual += wordCount - lastWordCount;
+                    lastWordCount = wordCount;
+                    alpha = startingAlpha * (1 - wordCountActual /(double) (trainWordsCount + 1));
+                    if (alpha < startingAlpha * 0.0001) {
+                        alpha = startingAlpha * 0.0001;
+                    }
+                }
                 String[] strs = temp.split(" ");
+                wordCount += strs.length ;
                 List<WordNeuron> sentence = new ArrayList<WordNeuron>();
                 for (int i = 0; i < strs.length; i++) {
                     Neuron entry = wordMap.get(strs[i]);
@@ -87,14 +101,16 @@ public class Learn {
                         if (ran < (nextRandom & 0xFFFF) / (double) 65536) {
                             continue;
                         }
-                        sentence.add((WordNeuron)entry);
+                        sentence.add((WordNeuron) entry);
                     }
                 }
-                nextRandom = nextRandom * 25214903917L + 11;
+                
+                
                 for (int index = 0; index < sentence.size(); index++) {
-                    skipGram( index,sentence,(int) nextRandom % window);
+                    nextRandom = nextRandom * 25214903917L + 11;
+                    skipGram(index, sentence, new Random().nextInt(window));
                 }
-               
+
             }
         }
     }
@@ -226,7 +242,7 @@ public class Learn {
 
     public static void main(String[] args) throws IOException {
         Learn learn = new Learn();
-        learn.learnFile(new File("xh.txt"));
-        learn.saveModel(new File("javaVector"));
+        learn.learnFile(new File("library/xh.txt"));
+        learn.saveModel(new File("library/javaVector"));
     }
 }

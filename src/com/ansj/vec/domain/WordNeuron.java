@@ -11,7 +11,7 @@ public class WordNeuron extends Neuron {
     private List<Neuron> neurons = null;//路径神经元
     public int[] codeArr = null;
 
-    public synchronized List<Neuron> getNeurons() {
+    public List<Neuron> getNeurons() {
         if (neurons != null) {
             return neurons;
         }
