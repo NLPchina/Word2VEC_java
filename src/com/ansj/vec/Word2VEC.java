@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -20,26 +21,31 @@ public class Word2VEC {
     public static void main(String[] args) throws IOException {
         
         
-        Learn learn = new Learn();
-        learn.learnFile(new File("library/xh.txt"));
-        learn.saveModel(new File("library/javaSkip1"));
+//        Learn learn = new Learn();
+//        learn.learnFile(new File("library/xh.txt"));
+//        learn.saveModel(new File("library/javaSkip1"));
         
         Word2VEC vec = new Word2VEC();
         vec.loadJavaModel("library/javaSkip1");
         
-
-        Word2VEC vec2 = new Word2VEC();
-        vec2.loadGoogleModel("library/vectors.bin") ;
+        System.out.println("中国"+"\t"+Arrays.toString(vec.getWordVector("中国") ));;
+        System.out.println("毛泽东"+"\t"+Arrays.toString(vec.getWordVector("毛泽东") ));;
+        System.out.println("足球"+"\t"+Arrays.toString(vec.getWordVector("足球") ));;
         
-        
-        String str = "毛泽东" ;
-        System.out.println(vec.distance(str));
-        System.out.println(vec2.distance(str));
         
 
-        //男人 国王 女人 
-        System.out.println(vec.analogy("邓小平", "毛泽东思想", "毛泽东"));
-        System.out.println(vec2.analogy("毛泽东", "毛泽东思想", "邓小平"));
+//        Word2VEC vec2 = new Word2VEC();
+//        vec2.loadGoogleModel("library/vectors.bin") ;
+//        
+//        
+//        String str = "毛泽东" ;
+//        System.out.println(vec.distance(str));
+//        System.out.println(vec2.distance(str));
+//        
+//
+//        //男人 国王 女人 
+//        System.out.println(vec.analogy("邓小平", "毛泽东思想", "毛泽东"));
+//        System.out.println(vec2.analogy("毛泽东", "毛泽东思想", "邓小平"));
     }
 
     private HashMap<String, float[]> wordMap = new HashMap<String, float[]>();
@@ -105,12 +111,13 @@ public class Word2VEC {
             path)))) {
             words = dis.readInt();
             size = dis.readInt();
-            double len = 0;
+           
             float vector = 0;
 
             String key = null;
             float[] value = null;
             for (int i = 0; i < words; i++) {
+                double len = 0;
                 key = dis.readUTF();
                 value = new float[size];
                 for (int j = 0; j < size; j++) {

@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 
 import love.cq.util.MapCount;
 
@@ -37,7 +36,7 @@ public class Learn {
 
     private double sample = 1e-3;
     private double alpha = 0.025;
-    private double startingAlpha = alpha ;
+    private double startingAlpha = alpha;
 
     public int EXP_TABLE_SIZE = 1000;
 
@@ -109,8 +108,8 @@ public class Learn {
                         if (ran < (nextRandom & 0xFFFF) / (double) 65536) {
                             continue;
                         }
-                        sentence.add((WordNeuron) entry);
                     }
+                    sentence.add((WordNeuron) entry);
                 }
 
                 for (int index = 0; index < sentence.size(); index++) {
@@ -123,6 +122,9 @@ public class Learn {
                 }
 
             }
+            System.out.println("Vocab size: " + wordMap.size());
+            System.out.println("Words in train file: " + trainWordsCount);
+            System.out.println("sucess train over!");
         }
     }
 
@@ -133,7 +135,6 @@ public class Learn {
      */
     private void skipGram(int index, List<WordNeuron> sentence, int b) {
         // TODO Auto-generated method stub
-        //double[] neu1 = new double[layerSize];//神经元
         WordNeuron word = sentence.get(index);
         int a, c = 0;
         for (a = b; a < window * 2 + 1 - b; a++) {
@@ -147,7 +148,7 @@ public class Learn {
 
             double[] neu1e = new double[layerSize];//误差项
             //HIERARCHICAL SOFTMAX
-            List<Neuron> neurons = word.getNeurons();
+            List<Neuron> neurons = word.neurons;
             WordNeuron we = sentence.get(c);
             for (int i = 0; i < neurons.size(); i++) {
                 HiddenNeuron out = (HiddenNeuron) neurons.get(i);
@@ -164,6 +165,7 @@ public class Learn {
                 }
                 // 'g' is the gradient multiplied by the learning rate
                 double g = (1 - word.codeArr[i] - f) * alpha;
+                // Propagate errors output -> hidden
                 for (c = 0; c < layerSize; c++) {
                     neu1e[c] += g * out.syn1[c];
                 }
@@ -191,7 +193,7 @@ public class Learn {
         WordNeuron word = sentence.get(index);
         int a, c = 0;
 
-        List<Neuron> neurons = word.getNeurons();
+        List<Neuron> neurons = word.neurons;
         double[] neu1e = new double[layerSize];//误差项
         double[] neu1 = new double[layerSize];//误差项
         WordNeuron last_word;
@@ -210,12 +212,9 @@ public class Learn {
                     neu1[c] += last_word.syn0[c];
             }
 
-        //        //HIERARCHICAL SOFTMAX
-        //        WordNeuron we = sentence.get(c);
-
+        //HIERARCHICAL SOFTMAX
         for (int d = 0; d < neurons.size(); d++) {
             HiddenNeuron out = (HiddenNeuron) neurons.get(d);
-
             double f = 0;
             // Propagate hidden -> output
             for (c = 0; c < layerSize; c++)
@@ -299,6 +298,12 @@ public class Learn {
     public void learnFile(File file) throws IOException {
         readVocab(file);
         new Haffman(layerSize).make(wordMap.values());
+        
+        //查找每个神经元
+        for (Neuron neuron : wordMap.values()) {
+            ((WordNeuron)neuron).makeNeurons() ;
+        }
+        
         trainModel(file);
     }
 
@@ -325,8 +330,7 @@ public class Learn {
             e.printStackTrace();
         }
     }
-    
-    
+
     public int getLayerSize() {
         return layerSize;
     }
@@ -357,7 +361,7 @@ public class Learn {
 
     public void setAlpha(double alpha) {
         this.alpha = alpha;
-        this.startingAlpha = alpha ;
+        this.startingAlpha = alpha;
     }
 
     public Boolean getIsCbow() {
@@ -370,7 +374,10 @@ public class Learn {
 
     public static void main(String[] args) throws IOException {
         Learn learn = new Learn();
+        long start = System.currentTimeMillis() ;
         learn.learnFile(new File("library/xh.txt"));
+        System.out.println("use time "+(System.currentTimeMillis()-start));
         learn.saveModel(new File("library/javaVector"));
+        
     }
 }

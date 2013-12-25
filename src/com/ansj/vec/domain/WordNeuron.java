@@ -8,10 +8,10 @@ import java.util.Random;
 public class WordNeuron extends Neuron {
     public String name;
     public double[] syn0 = null; //input->hidden
-    private List<Neuron> neurons = null;//路径神经元
+    public List<Neuron> neurons = null;//路径神经元
     public int[] codeArr = null;
 
-    public List<Neuron> getNeurons() {
+    public List<Neuron> makeNeurons() {
         if (neurons != null) {
             return neurons;
         }
