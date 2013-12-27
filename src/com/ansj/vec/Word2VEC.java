@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
@@ -19,33 +21,38 @@ import com.ansj.vec.domain.WordEntry;
 public class Word2VEC {
 
     public static void main(String[] args) throws IOException {
-        
-        
-//        Learn learn = new Learn();
-//        learn.learnFile(new File("library/xh.txt"));
-//        learn.saveModel(new File("library/javaSkip1"));
-        
+
+        //        Learn learn = new Learn();
+        //        learn.learnFile(new File("library/xh.txt"));
+        //        learn.saveModel(new File("library/javaSkip1"));
+
         Word2VEC vec = new Word2VEC();
         vec.loadJavaModel("library/javaSkip1");
-        
-        System.out.println("中国"+"\t"+Arrays.toString(vec.getWordVector("中国") ));;
-        System.out.println("毛泽东"+"\t"+Arrays.toString(vec.getWordVector("毛泽东") ));;
-        System.out.println("足球"+"\t"+Arrays.toString(vec.getWordVector("足球") ));;
-        
-        
 
-//        Word2VEC vec2 = new Word2VEC();
-//        vec2.loadGoogleModel("library/vectors.bin") ;
-//        
-//        
-//        String str = "毛泽东" ;
-//        System.out.println(vec.distance(str));
-//        System.out.println(vec2.distance(str));
-//        
-//
-//        //男人 国王 女人 
-//        System.out.println(vec.analogy("邓小平", "毛泽东思想", "毛泽东"));
-//        System.out.println(vec2.analogy("毛泽东", "毛泽东思想", "邓小平"));
+        //        System.out.println("中国" + "\t" + Arrays.toString(vec.getWordVector("中国")));
+        //        ;
+        //        System.out.println("毛泽东" + "\t" + Arrays.toString(vec.getWordVector("毛泽东")));
+        //        ;
+        //        System.out.println("足球" + "\t" + Arrays.toString(vec.getWordVector("足球")));
+
+        //        Word2VEC vec2 = new Word2VEC();
+        //        vec2.loadGoogleModel("library/vectors.bin") ;
+        //        
+        //        
+        String str = "毛泽东";
+        long start = System.currentTimeMillis();
+        for (int i = 0; i < 100; i++) {
+            System.out.println(vec.distance(str));;
+        }
+        System.out.println(System.currentTimeMillis() - start);
+
+        System.out.println(System.currentTimeMillis() - start);
+        //        System.out.println(vec2.distance(str));
+        //        
+        //
+        //        //男人 国王 女人 
+        //        System.out.println(vec.analogy("邓小平", "毛泽东思想", "毛泽东"));
+        //        System.out.println(vec2.analogy("毛泽东", "毛泽东思想", "邓小平"));
     }
 
     private HashMap<String, float[]> wordMap = new HashMap<String, float[]>();
@@ -111,7 +118,7 @@ public class Word2VEC {
             path)))) {
             words = dis.readInt();
             size = dis.readInt();
-           
+
             float vector = 0;
 
             String key = null;
@@ -125,7 +132,7 @@ public class Word2VEC {
                     len += vector * vector;
                     value[j] = vector;
                 }
-                
+
                 len = Math.sqrt(len);
 
                 for (int j = 0; j < size; j++) {
@@ -139,35 +146,6 @@ public class Word2VEC {
 
     private static final int MAX_SIZE = 50;
 
-    /**
-     * 得到近义词
-     * 
-     * @param word
-     * @return
-     */
-    public Set<WordEntry> distance(String word) {
-        float[] wordVector = getWordVector(word);
-        if (wordVector == null) {
-            return null;
-        }
-        Set<Entry<String, float[]>> entrySet = wordMap.entrySet();
-        float[] tempVector = null;
-        List<WordEntry> wordEntrys = new ArrayList<WordEntry>(topNSize);
-        String name = null;
-        for (Entry<String, float[]> entry : entrySet) {
-            name = entry.getKey();
-            if (name.equals(word)) {
-                continue;
-            }
-            float dist = 0;
-            tempVector = entry.getValue();
-            for (int i = 0; i < wordVector.length; i++) {
-                dist += wordVector[i] * tempVector[i];
-            }
-            insertTopN(name, dist, wordEntrys);
-        }
-        return new TreeSet<WordEntry>(wordEntrys);
-    }
 
     /**
      * 近义词
@@ -223,6 +201,38 @@ public class Word2VEC {
             wordsEntrys.set(minOffe, new WordEntry(name, score));
         }
 
+    }
+
+
+    public Set<WordEntry> distance(String queryWord) {
+
+        float[] center = wordMap.get(queryWord);
+        if (center == null) {
+            return Collections.emptySet();
+        }
+
+        int resultSize = wordMap.size() < topNSize ? wordMap.size() : topNSize;
+        TreeSet<WordEntry> result = new TreeSet<WordEntry>();
+
+        double min = Float.MIN_VALUE;
+        for (Map.Entry<String, float[]> entry : wordMap.entrySet()) {
+            float[] vector = entry.getValue();
+            float dist = 0;
+            for (int i = 0; i < vector.length; i++) {
+                dist += center[i] * vector[i];
+            }
+
+            if (dist > min) {
+                result.add(new WordEntry(entry.getKey(), dist));
+                if (resultSize < result.size()) {
+                    result.pollLast();
+                }
+                min = result.last().score;
+            }
+        }
+        result.pollFirst();
+
+        return result;
     }
 
     /**
