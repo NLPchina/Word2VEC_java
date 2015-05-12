@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import love.cq.util.MapCount;
+import com.ansj.vec.util.MapCount;
 
 import com.ansj.vec.domain.HiddenNeuron;
 import com.ansj.vec.domain.Neuron;

@@ -2,8 +2,6 @@ package test;
 
 import java.io.IOException;
 
-import org.ansj.splitWord.analysis.CRFAnalysis;
-
 import com.ansj.vec.Word2VEC;
 
 public class Test {
