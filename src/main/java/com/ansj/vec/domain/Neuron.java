@@ -18,7 +18,7 @@ public abstract class Neuron implements Comparable<Neuron> {
     } else if (this.category > neuron.category) {
       return 1;
     } else {
-      return 0;
+      return -1;
     }
   }
 }
