@@ -2,6 +2,7 @@ package com.ansj.vec.domain;
 
 public abstract class Neuron implements Comparable<Neuron> {
   public double freq;
+  public int cn;//词语频数
   public Neuron parent;
   public int code;
   // 语料预分类
