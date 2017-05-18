@@ -1,18 +1,7 @@
 package com.ansj.vec;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 import java.util.Map.Entry;
 
 import com.ansj.vec.util.MapCount;
@@ -47,6 +36,16 @@ public class Learn {
   private int trainWordsCount = 0;
 
   private int MAX_EXP = 6;
+
+  private int vocabSize = 0;
+
+  int hs = 1, negative = 0;
+
+  int table_size = (int) 1e8;
+
+  int[] table = new int[table_size];
+
+  HashMap<Integer, Neuron> hashMap = new HashMap<Integer, Neuron>();//存储<index，WordNeuron>
 
   public Learn(Boolean isCbow, Integer layerSize, Integer window, Double alpha,
       Double sample) {
@@ -105,8 +104,9 @@ public class Learn {
           // The subsampling randomly discards frequent words while keeping the
           // ranking same
           if (sample > 0) {
-            double ran = (Math.sqrt(entry.freq / (sample * trainWordsCount)) + 1)
-                * (sample * trainWordsCount) / entry.freq;
+            //应该为词频数cn
+            double ran = (Math.sqrt(entry.cn / (sample * trainWordsCount)) + 1)
+                * (sample * trainWordsCount) / entry.cn;
             nextRandom = nextRandom * 25214903917L + 11;
             if (ran < (nextRandom & 0xFFFF) / (double) 65536) {
               continue;
@@ -118,9 +118,9 @@ public class Learn {
         for (int index = 0; index < sentence.size(); index++) {
           nextRandom = nextRandom * 25214903917L + 11;
           if (isCbow) {
-            cbowGram(index, sentence, (int) nextRandom % window);
+            cbowGram(index, sentence, (int) ((nextRandom % window) + nextRandom) % window);
           } else {
-            skipGram(index, sentence, (int) nextRandom % window);
+            skipGram(index, sentence, (int) ((nextRandom % window) + nextRandom) % window);//避免为负
           }
         }
 
@@ -134,12 +134,16 @@ public class Learn {
   /**
    * skip gram 模型训练
    * 
+   * @param index
    * @param sentence
-   * @param neu1
+   * @param b
    */
   private void skipGram(int index, List<WordNeuron> sentence, int b) {
     // TODO Auto-generated method stub
     WordNeuron word = sentence.get(index);
+    long nextRandom = b;
+    int target;
+    int label;
     int a, c = 0;
     for (a = b; a < window * 2 + 1 - b; a++) {
       if (a == window) {
@@ -154,28 +158,72 @@ public class Learn {
       // HIERARCHICAL SOFTMAX
       List<Neuron> neurons = word.neurons;
       WordNeuron we = sentence.get(c);
-      for (int i = 0; i < neurons.size(); i++) {
-        HiddenNeuron out = (HiddenNeuron) neurons.get(i);
-        double f = 0;
-        // Propagate hidden -> output
-        for (int j = 0; j < layerSize; j++) {
-          f += we.syn0[j] * out.syn1[j];
+
+      if (hs > 0) {
+        for (int i = 0; i < neurons.size(); i++) {
+          HiddenNeuron out = (HiddenNeuron) neurons.get(i);
+          double f = 0;
+          // Propagate hidden -> output
+          for (int j = 0; j < layerSize; j++) {
+            f += we.syn0[j] * out.syn1[j];
+          }
+          if (f <= -MAX_EXP || f >= MAX_EXP) {
+            continue;
+          } else {
+            f = (f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2);
+            f = expTable[(int) f];
+          }
+          // 'g' is the gradient multiplied by the learning rate
+          double g = (1 - word.codeArr[i] - f) * alpha;
+          // Propagate errors output -> hidden
+          for (c = 0; c < layerSize; c++) {
+            neu1e[c] += g * out.syn1[c];
+          }
+          // Learn weights hidden -> output
+          for (c = 0; c < layerSize; c++) {
+            out.syn1[c] += g * we.syn0[c];
+          }
         }
-        if (f <= -MAX_EXP || f >= MAX_EXP) {
-          continue;
-        } else {
-          f = (f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2);
-          f = expTable[(int) f];
-        }
-        // 'g' is the gradient multiplied by the learning rate
-        double g = (1 - word.codeArr[i] - f) * alpha;
-        // Propagate errors output -> hidden
-        for (c = 0; c < layerSize; c++) {
-          neu1e[c] += g * out.syn1[c];
-        }
-        // Learn weights hidden -> output
-        for (c = 0; c < layerSize; c++) {
-          out.syn1[c] += g * we.syn0[c];
+      }
+
+      // NEGATIVE SAMPLING
+      if (negative > 0) {
+        WordNeuron temp;
+        for (int d = 0; d < negative + 1; d++) {
+          if (d == 0) {
+            target = word.index;
+            temp = word;
+            label = 1;
+          } else {
+            nextRandom = nextRandom * 25214903917l + 11;
+            target = table[(int) (((nextRandom >> 16) % table_size) + table_size) % table_size];
+//            if (target == 0) {
+//              target = (int) (((nextRandom % (vocabSize - 1)) + vocabSize - 1) % (vocabSize - 1)) + 1;
+//            }
+            if (target == word.index) {
+              continue;
+            }
+            temp = (WordNeuron) hashMap.get(target);
+            label = 0;
+          }
+          double f = 0;
+          for (c = 0; c < layerSize; c++) {
+            f += we.syn0[c] * temp.syn1neg[c];
+          }
+          double g;
+          if (f > MAX_EXP) {
+            g = (label - 1) * alpha;
+          } else if (f < -MAX_EXP) {
+            g = (label - 0) * alpha;
+          } else {
+            g = (label - expTable[(int) ((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))]) * alpha;
+          }
+          for (c = 0; c < layerSize; c++) {
+            neu1e[c] += g * temp.syn1neg[c];
+          }
+          for (c = 0; c < layerSize; c++) {
+            temp.syn1neg[c] += g * we.syn0[c];
+          }
         }
       }
 
@@ -196,12 +244,15 @@ public class Learn {
    */
   private void cbowGram(int index, List<WordNeuron> sentence, int b) {
     WordNeuron word = sentence.get(index);
+    long nextRandom = b;
+    int target;
+    int label;
     int a, c = 0;
 
     List<Neuron> neurons = word.neurons;
     double[] neu1e = new double[layerSize];// 误差项
     double[] neu1 = new double[layerSize];// 误差项
-    WordNeuron last_word;
+    WordNeuron last_word = null;
 
     for (a = b; a < window * 2 + 1 - b; a++)
       if (a != window) {
@@ -218,31 +269,73 @@ public class Learn {
       }
 
     // HIERARCHICAL SOFTMAX
-    for (int d = 0; d < neurons.size(); d++) {
-      HiddenNeuron out = (HiddenNeuron) neurons.get(d);
-      double f = 0;
-      // Propagate hidden -> output
-      for (c = 0; c < layerSize; c++)
-        f += neu1[c] * out.syn1[c];
-      if (f <= -MAX_EXP)
-        continue;
-      else if (f >= MAX_EXP)
-        continue;
-      else
-        f = expTable[(int) ((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
-      // 'g' is the gradient multiplied by the learning rate
-      // double g = (1 - word.codeArr[d] - f) * alpha;
-      // double g = f*(1-f)*( word.codeArr[i] - f) * alpha;
-      double g = f * (1 - f) * (word.codeArr[d] - f) * alpha;
-      //
-      for (c = 0; c < layerSize; c++) {
-        neu1e[c] += g * out.syn1[c];
-      }
-      // Learn weights hidden -> output
-      for (c = 0; c < layerSize; c++) {
-        out.syn1[c] += g * neu1[c];
+    if (hs > 0) {
+      for (int d = 0; d < neurons.size(); d++) {
+        HiddenNeuron out = (HiddenNeuron) neurons.get(d);
+        double f = 0;
+        // Propagate hidden -> output
+        for (c = 0; c < layerSize; c++)
+          f += neu1[c] * out.syn1[c];
+        if (f <= -MAX_EXP)
+          continue;
+        else if (f >= MAX_EXP)
+          continue;
+        else
+          f = expTable[(int) ((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
+        // 'g' is the gradient multiplied by the learning rate
+        // double g = (1 - word.codeArr[d] - f) * alpha;
+        // double g = f*(1-f)*( word.codeArr[i] - f) * alpha;
+        double g = f * (1 - f) * (word.codeArr[d] - f) * alpha;
+        //
+        for (c = 0; c < layerSize; c++) {
+          neu1e[c] += g * out.syn1[c];
+        }
+        // Learn weights hidden -> output
+        for (c = 0; c < layerSize; c++) {
+          out.syn1[c] += g * neu1[c];
+        }
       }
     }
+
+    // NEGATIVE SAMPLING
+    if (negative > 0) {
+      WordNeuron temp = null;
+      for (int d = 0; d < negative + 1; d++) {
+        if (d == 0) {
+          target = word.index;
+          temp = word;
+          label = 1;
+        } else {
+          nextRandom = nextRandom * 25214903917l + 11;
+          target = table[(int) (((nextRandom >> 16) % table_size) + table_size) % table_size];
+
+          if (target == word.index){
+            continue;
+          }
+          temp = (WordNeuron) hashMap.get(target);
+          label = 0;
+        }
+        double f = 0;
+        for (c = 0; c < layerSize; c++) {
+          f += last_word.syn0[c] * temp.syn1neg[c];
+        }
+        double g;
+        if (f > MAX_EXP){
+          g = (label - 1) * alpha;
+        } else if (f < -MAX_EXP){
+          g = (label - 0) * alpha;
+        } else {
+          g = (label - expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))]) * alpha;
+        }
+        for (c = 0; c < layerSize; c++) {
+          neu1e[c] += g * temp.syn1neg[c];
+        }
+        for (c = 0; c < layerSize; c++) {
+          temp.syn1neg[c] += g * neu1[c];
+        }
+      }
+    }
+
     for (a = b; a < window * 2 + 1 - b; a++) {
       if (a != window) {
         c = index - window + a;
@@ -257,6 +350,36 @@ public class Learn {
           last_word.syn0[c] += neu1e[c];
       }
 
+    }
+  }
+
+  /**
+   * 每个单词的能量分布表，table在负采样中用到
+   */
+  private void InitUnigramTable() {
+    int a, i;
+    long train_words_pow = 0;
+    double d1, power = 0.75;
+
+    for (Entry<String, Neuron> entry : wordMap.entrySet()) {
+      WordNeuron temp = (WordNeuron) entry.getValue();
+      hashMap.put(temp.index, temp);
+      train_words_pow += Math.pow(temp.cn, power);
+    }
+//    for (a = 0; a < vocabSize; a++) {
+//      train_words_pow += Math.pow(wordMap.get(hashMap.get(a)).cn, power);
+//    }
+    i = 0;
+    d1 = Math.pow(hashMap.get(i).cn, power) / (double) train_words_pow;
+    for (a = 0; a < table_size; a++) {
+      table[a] = i;
+      if (a / (double) table_size > d1) {
+        i++;
+        d1 += Math.pow(hashMap.get(i).cn, power) / (double) train_words_pow;
+      }
+      if (i >= hashMap.size()) {
+        i = hashMap.size() - 1;
+      }
     }
   }
 
@@ -279,10 +402,32 @@ public class Learn {
         }
       }
     }
-    for (Entry<String, Integer> element : mc.get().entrySet()) {
-      wordMap.put(element.getKey(), new WordNeuron(element.getKey(),
-          (double) element.getValue() / mc.size(), layerSize));
+
+    if (hs > 0) {
+      for (Entry<String, Integer> element : mc.get().entrySet()) {
+        wordMap.put(element.getKey(), new WordNeuron(element.getKey(),
+                (double) element.getValue() / mc.size(), layerSize));
+      }
     }
+
+    if (negative > 0) {
+      List<Entry<String, Integer>> list = new ArrayList<Entry<String, Integer>>(mc.get().entrySet());
+
+      Collections.sort(list,new Comparator<Entry<String,Integer>>() {
+        //降序排序
+        public int compare(Entry<String, Integer> o1, Entry<String, Integer> o2) {
+          return -o1.getValue().compareTo(o2.getValue());
+        }
+      });
+      int index = 0;
+
+      for (Entry<String, Integer> element : list) {
+        wordMap.put(element.getKey(), new WordNeuron(element.getKey(), element.getValue(), index++,
+                (double) element.getValue() / mc.size(), layerSize));
+      }
+    }
+    vocabSize = wordMap.size();
+    System.out.println("vocabSize " + vocabSize + "    " + "trainWordsCount " + trainWordsCount);
   }
 
   /**
@@ -344,11 +489,18 @@ public class Learn {
    */
   public void learnFile(File file) throws IOException {
     readVocab(file);
-    new Haffman(layerSize).make(wordMap.values());
+    if (hs > 0) {
+      new Haffman(layerSize).make(wordMap.values());
 
-    // 查找每个神经元
-    for (Neuron neuron : wordMap.values()) {
-      ((WordNeuron) neuron).makeNeurons();
+      // 查找每个神经元
+      for (Neuron neuron : wordMap.values()) {
+        ((WordNeuron) neuron).makeNeurons();
+      }
+    }
+
+    if(negative > 0){
+      InitUnigramTable();
+      System.out.println("InitUnigramTable");
     }
 
     trainModel(file);
@@ -394,6 +546,28 @@ public class Learn {
       }
     } catch (IOException e) {
       // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * 以txt格式保存模型
+   */
+  public void saveTxtModel(File file) {
+    try (BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
+      bufferedWriter.write(String.valueOf(wordMap.size()));
+      bufferedWriter.write(String.valueOf(layerSize));
+      bufferedWriter.newLine();
+      double[] syn0 = null;
+      for (Entry<String, Neuron> element : wordMap.entrySet()) {
+        bufferedWriter.write(element.getKey());
+        syn0 = ((WordNeuron) element.getValue()).syn0;
+        for (double d : syn0) {
+          bufferedWriter.write(String.valueOf((float) d));
+        }
+        bufferedWriter.newLine();
+      }
+    } catch (IOException e) {
       e.printStackTrace();
     }
   }
