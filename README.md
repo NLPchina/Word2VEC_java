@@ -7,6 +7,8 @@ word2vec java版本的一个实现
 
 有人抱怨没有测试代码。我工作中用到。写了个例子正好发这里。大家领会下精神把
 
+有人抱怨没有语料 https://pan.baidu.com/s/1jIy3YSY 大家用这个吧
+
 
 ````
 package com.kuyun.document_class;
