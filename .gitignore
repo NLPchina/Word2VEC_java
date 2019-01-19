@@ -4,4 +4,4 @@
 .DS_Store
 /bin
 .git
-library/
+/target/

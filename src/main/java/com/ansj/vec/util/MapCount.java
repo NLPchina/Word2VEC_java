@@ -13,16 +13,16 @@ public class MapCount<T> {
     private HashMap<T, Integer> hm = null;
 
     public MapCount() {
-        this.hm = new HashMap();
+        this.hm = new HashMap<>();
     }
 
     public MapCount(int initialCapacity) {
-        this.hm = new HashMap(initialCapacity);
+        this.hm = new HashMap<>(initialCapacity);
     }
 
     public void add(T t, int n) {
         Integer integer = null;
-        if((integer = (Integer)this.hm.get(t)) != null) {
+        if ((integer = (Integer) this.hm.get(t)) != null) {
             this.hm.put(t, Integer.valueOf(integer.intValue() + n));
         } else {
             this.hm.put(t, Integer.valueOf(n));
@@ -47,22 +47,18 @@ public class MapCount<T> {
     }
 
     public String getDic() {
-        Iterator iterator = this.hm.entrySet().iterator();
+        Iterator<Entry<T, Integer>> iterator = this.hm.entrySet().iterator();
         StringBuilder sb = new StringBuilder();
-        Entry next = null;
+        Entry<T, Integer> next = null;
 
-        while(iterator.hasNext()) {
-            next = (Entry)iterator.next();
+        while (iterator.hasNext()) {
+            next = (Entry<T, Integer>) iterator.next();
             sb.append(next.getKey());
             sb.append("\t");
             sb.append(next.getValue());
             sb.append("\n");
         }
-
         return sb.toString();
     }
 
-    public static void main(String[] args) {
-        System.out.println(9223372036854775807L);
-    }
 }

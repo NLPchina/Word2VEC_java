@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ansj.vec.Word2VEC;
+import com.ansj.vec.Word2vec;
 
 /**
  * keanmeans聚类
@@ -21,7 +21,7 @@ import com.ansj.vec.Word2VEC;
 public class WordKmeans {
 
     public static void main(String[] args) throws IOException {
-        Word2VEC vec = new Word2VEC();
+        Word2vec vec = new Word2vec();
         vec.loadGoogleModel("vectors.bin");
         System.out.println("load model ok!");
         WordKmeans wordKmeans = new WordKmeans(vec.getWordMap(), 50, 50);
@@ -147,7 +147,6 @@ public class WordKmeans {
             Collections.sort(arrayList, new Comparator<Map.Entry<String, Double>>() {
                 @Override
                 public int compare(Entry<String, Double> o1, Entry<String, Double> o2) {
-                    // TODO Auto-generated method stub
                     return o1.getValue() > o2.getValue() ? 1 : -1;
                 }
             });

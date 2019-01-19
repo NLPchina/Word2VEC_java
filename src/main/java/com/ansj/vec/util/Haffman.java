@@ -1,7 +1,6 @@
 package com.ansj.vec.util;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.TreeSet;
 
 import com.ansj.vec.domain.HiddenNeuron;
