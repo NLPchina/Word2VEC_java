@@ -6,8 +6,8 @@
 Word2Vec中2个distance方法中，min = result.last().score; 应该放在resultSize < result.size()块里。
 只有当结果数已经大于resultSize，才能将最后一个得分数赋予min，作为以后最小允许得分。结果数不大于resultSize不能赋予给min。
 
-距离最近词，计算词距离，聚类等测试结果：
-Word2VecTest.class
+运行Word2VecTest.class，距离最近词，计算词距离，聚类等：
+
 
  public static void main(String[] args) throws IOException {
         Word2vec vec = new Word2vec();
@@ -38,7 +38,8 @@ Word2VecTest.class
             System.out.println(explain[i].getTop(10));
         }
     }
-
+    
+结果：
 [毛泽东	0.7644433, 小平	0.6703129, 彭真	0.66716033, 项英	0.6612427, 王震	0.61630136, 精辟	0.6138411, 遗影	0.6100997, 罗炳辉	0.60993606, 无产阶级	0.60723233, 原话	0.60619086, 遗志	0.60150117, 诚如	0.5884211, 曾克	0.5845276, 所说	0.58375937, 与世长辞	0.5836175, 张宝忠	0.58026356, 节选	0.57623154, 南巡	0.5756824, 典藏本	0.5754866, 康克清	0.5742924, 论述	0.5675422, 马克思主义者	0.56722516, 半身像	0.5662199, 草明	0.5655095, 一以贯之	0.56540805, 引述	0.56431895, 以其昏昏	0.5598442, 陈云	0.5578752, 世宗	0.5578731, 任定成	0.5557121, 罗竹风	0.55448216, 忌辰	0.55138385, 帮助者	0.54890114, 力举	0.5488076, 革命家	0.5476286, 列宁	0.54710037, 老一辈	0.5446466, 王平	0.53976685, 何振光	0.539401, 护身	0.5385265]
 [奥兰多	0.8990011, 新泽西	0.83124423, 奇才队	0.82303494, 网队	0.6876496, 顾明	0.68449014, 喻广生	0.6766388, 大年初五	0.67316043, 实习生	0.67124707, 佛罗里达州	0.6711269, 刘国强	0.66510504, 利纳雷斯	0.6648634, 郑金发	0.66467416, 寒风料峭	0.6624502, 孙星文	0.6613987, 廿七	0.66014194, 谷利源	0.65965, 孙永明	0.6595951, 辛祥利	0.6593127, 蓝宝石	0.6587766, 秦凤桐	0.6582865, 乔颖	0.656125, 潘家埠	0.6528409, 安卡拉	0.6501446, 刘文国	0.6500238, 马那瓜	0.6496207, 盛世良	0.64810187, 年初四	0.64746207, 时装展	0.64492613, 孟军	0.6446666, 俞俭	0.64461464, 谢湘	0.64448756, 刘世昕	0.6439994, 摩洛哥王国	0.6434583, 科托努	0.64319485, 周健伟	0.6416397, 王波	0.6413159, 阿鲁沙省	0.64103186, 刘永华	0.64082164, 侯嘉	0.64043736, 里斯本	0.6402035]
 [在家	0.7423898, 舍不得	0.7376384, 俺	0.7369837, 摆手	0.73432696, 夜餐	0.7341076, 哩	0.7335882, 面条	0.72474533, 雷打不动	0.724103, 沾	0.7240173, 婆婆	0.7221275, 住店	0.7218268, 渴	0.7201695, 高谈阔论	0.7197889, 点儿	0.718748, 蓉蓉	0.71823263, 咸肉	0.71812654, 俺们	0.71790886, 闲不住	0.71683896, 脸面	0.7157444, 白吃	0.7155953, 忙乎	0.715091, 嘴	0.71458715, 来不及	0.7142201, 啥	0.71339524, 过节	0.7130332, 狼吞虎咽	0.71150655, 粥	0.71060145, 爸	0.7104714, 干脆	0.7101893, 娶	0.70979977, 团圆饭	0.70957047, 活儿	0.7085973, 觉着	0.70842355, 挺	0.70738465, 小孩子	0.7071321, 吵架	0.706652, 小时候	0.70644444, 咱	0.70609075, 饱	0.70579404, 晚饭	0.70564157]
@@ -147,101 +148,3 @@ Word2VecTest.class
 [观测仪=0.6452558477285351, 安民=0.6513319584343849, 玉泰=0.6515626209000835, 席正山=0.6546090306028987, 乳制品厂=0.6566322639701689, 次氯酸钠=0.6576678846638444, 乳白=0.6578869356264647, 盐碱化=0.659510153655666, 类风湿性=0.6619935148950873, 争食=0.66367896406787]
 --------49---------
 [237=0.35729262567944886, 4．0=0.3578793692168425, 71=0.36389666479411886, 6．67=0.36643154913245723, 69=0.3700212141710928, 104=0.37287714196373223, 大项=0.37654549168207296, 一百四十二=0.3791900172355902, 105=0.3806851737644763, 108=0.3829455765985171]
-
-源作者README.md
-=============================
-Word2VEC_java
-=============
-
-word2vec java版本的一个实现
-
-
-
-有人抱怨没有测试代码。我工作中用到。写了个例子正好发这里。大家领会下精神把
-
-有人抱怨没有语料 https://pan.baidu.com/s/1jIy3YSY 大家用这个吧
-
-
-````
-package com.kuyun.document_class;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.List;
-
-import org.ansj.domain.Term;
-import org.ansj.splitWord.analysis.ToAnalysis;
-
-import com.alibaba.fastjson.JSONObject;
-import com.ansj.vec.Learn;
-import com.ansj.vec.Word2VEC;
-
-import love.cq.util.IOUtil;
-import love.cq.util.StringUtil;
-
-public class Word2VecTest {
-    private static final File sportCorpusFile = new File("corpus/result.txt");
-
-    public static void main(String[] args) throws IOException {
-        File[] files = new File("corpus/sport/").listFiles();
-        
-        //构建语料
-        try (FileOutputStream fos = new FileOutputStream(sportCorpusFile)) {
-            for (File file : files) {
-                if (file.canRead() && file.getName().endsWith(".txt")) {
-                    parserFile(fos, file);
-                }
-            }
-        }
-        
-        //进行分词训练
-        
-        Learn lean = new Learn() ;
-        
-        lean.learnFile(sportCorpusFile) ;
-        
-        lean.saveModel(new File("model/vector.mod")) ;
-        
-        
-        
-        //加载测试
-        
-        Word2VEC w2v = new Word2VEC() ;
-        
-        w2v.loadJavaModel("model/vector.mod") ;
-        
-        System.out.println(w2v.distance("姚明")); ;
-
-    }
-
-    private static void parserFile(FileOutputStream fos, File file) throws FileNotFoundException,
-                                                                   IOException {
-        // TODO Auto-generated method stub
-        try (BufferedReader br = IOUtil.getReader(file.getAbsolutePath(), IOUtil.UTF8)) {
-            String temp = null;
-            JSONObject parse = null;
-            while ((temp = br.readLine()) != null) {
-                parse = JSONObject.parseObject(temp);
-                paserStr(fos, parse.getString("title"));
-                paserStr(fos, StringUtil.rmHtmlTag(parse.getString("content")));
-            }
-        }
-    }
-
-    private static void paserStr(FileOutputStream fos, String title) throws IOException {
-        List<Term> parse2 = ToAnalysis.parse(title) ;
-        StringBuilder sb = new StringBuilder() ;
-        for (Term term : parse2) {
-            sb.append(term.getName()) ;
-            sb.append(" ");
-        }
-        fos.write(sb.toString().getBytes()) ;
-        fos.write("\n".getBytes()) ;
-    }
-}
-
-````
