@@ -1,95 +1,43 @@
-Word2VEC_java
-=============
+源项目链接：https://github.com/NLPchina/Word2VEC_java
 
-word2vec java版本的一个实现
+在源项目中做了如下处理：
 
+1.确保语料文本文件是UTF-8编码，附带了语料corpus.txt，训练模型文件model.bin因太大(120M)没有提交，需要自己本地训练(LearnTest.class)，训练时间大概几十分钟。
 
+2.源作者提供的语料是用制表符切割的词组，但是代码是根据空格切割，需要将制表符全部替换成空格。或者修改代码：Learn.java 271行，修改成String[] split = temp.split("[\s　]+");支持同时出现多个半角或全角空格，或制表符分隔。
 
-有人抱怨没有测试代码。我工作中用到。写了个例子正好发这里。大家领会下精神把
+3.发现一个bug
+Word2Vec中2个distance方法中，min = result.last().score; 应该放在resultSize < result.size()块里。
+只有当结果数已经大于resultSize，才能将最后一个得分数赋予min，作为以后最小允许得分。结果数不大于resultSize不能赋予给min。
 
-有人抱怨没有语料 https://pan.baidu.com/s/1jIy3YSY 大家用这个吧
-
-
-````
-package com.kuyun.document_class;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.List;
-
-import org.ansj.domain.Term;
-import org.ansj.splitWord.analysis.ToAnalysis;
-
-import com.alibaba.fastjson.JSONObject;
-import com.ansj.vec.Learn;
-import com.ansj.vec.Word2VEC;
-
-import love.cq.util.IOUtil;
-import love.cq.util.StringUtil;
-
-public class Word2VecTest {
-    private static final File sportCorpusFile = new File("corpus/result.txt");
+运行Word2VecTest.class，距离最近词，计算词距离，聚类等：
 
     public static void main(String[] args) throws IOException {
-        File[] files = new File("corpus/sport/").listFiles();
-        
-        //构建语料
-        try (FileOutputStream fos = new FileOutputStream(sportCorpusFile)) {
-            for (File file : files) {
-                if (file.canRead() && file.getName().endsWith(".txt")) {
-                    parserFile(fos, file);
-                }
-            }
+        Word2vec vec = new Word2vec();
+        vec.loadJavaModel("model.bin");
+        // 距离最近的词
+        System.out.println(vec.distance("邓小平"));
+        System.out.println(vec.distance("魔术队"));
+        System.out.println(vec.distance("过年"));
+        System.out.println(vec.distance(Arrays.asList("香港", "澳门")));
+        // // 计算词之间的距离
+        HashMap<String, float[]> map = vec.getWordMap();
+        float[] center1 = map.get("春节");
+        float[] center2 = map.get("过年");
+        double dics = 0;
+        for (int i = 0; i < center1.length; i++) {
+            dics += center1[i] * center2[i];
         }
-        
-        //进行分词训练
-        
-        Learn lean = new Learn() ;
-        
-        lean.learnFile(sportCorpusFile) ;
-        
-        lean.saveModel(new File("model/vector.mod")) ;
-        
-        
-        
-        //加载测试
-        
-        Word2VEC w2v = new Word2VEC() ;
-        
-        w2v.loadJavaModel("model/vector.mod") ;
-        
-        System.out.println(w2v.distance("姚明")); ;
-
-    }
-
-    private static void parserFile(FileOutputStream fos, File file) throws FileNotFoundException,
-                                                                   IOException {
-        // TODO Auto-generated method stub
-        try (BufferedReader br = IOUtil.getReader(file.getAbsolutePath(), IOUtil.UTF8)) {
-            String temp = null;
-            JSONObject parse = null;
-            while ((temp = br.readLine()) != null) {
-                parse = JSONObject.parseObject(temp);
-                paserStr(fos, parse.getString("title"));
-                paserStr(fos, StringUtil.rmHtmlTag(parse.getString("content")));
-            }
+        System.out.println(dics);
+        // 距离计算
+        System.out.println(vec.analogy("毛泽东", "邓小平", "毛泽东思想"));
+        System.out.println(vec.analogy("女人", "男人", "女王"));
+        System.out.println(vec.analogy("北京", "中国", "巴黎"));
+        // 聚类
+        WordKmeans wordKmeans = new WordKmeans(vec.getWordMap(), 50, 50);
+        Classes[] explain = wordKmeans.explain();
+        for (int i = 0; i < explain.length; i++) {
+            System.out.println("--------" + i + "---------");
+            System.out.println(explain[i].getTop(10));
         }
     }
-
-    private static void paserStr(FileOutputStream fos, String title) throws IOException {
-        List<Term> parse2 = ToAnalysis.parse(title) ;
-        StringBuilder sb = new StringBuilder() ;
-        for (Term term : parse2) {
-            sb.append(term.getName()) ;
-            sb.append(" ");
-        }
-        fos.write(sb.toString().getBytes()) ;
-        fos.write("\n".getBytes()) ;
-    }
-}
-
-````
